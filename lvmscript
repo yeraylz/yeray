@@ -1,0 +1,300 @@
+#!/bin/bash
+
+#18/12/2020
+
+#Francisco Yeray Pérez Perera
+
+#Script para un mejor manejo del paquete LVM (Logical Volume Manager) es un software que le permite administrar múltiples espacios en el disco duro mediante la creación de volúmenes lógicos. 
+	
+###########################################################################
+
+#Root o no 
+
+function _eresroot()
+{
+
+clear
+echo
+echo "***********************"
+echo "BIENVENIDOS AL MENU LVM"
+echo "***********************"
+	sleep 2
+echo
+echo "Comprobando requisitos para acceder..."
+echo "--------------------------------------"
+echo
+	sleep 2
+echo "Verificando si eres root..."
+	sleep 2
+	if ! [ $(id -u) = 0 ]; then
+		echo
+		echo "No eres root, ejecuta el programa como root para acceder"
+			sleep 2
+		exit
+	else
+		echo "verificado ✔"
+			sleep 2
+			echo
+	fi
+
+}
+
+#Comprovamos si LVM2 esta instalado
+
+function _lvm2ok()
+{
+echo "Probando si LVM2 esta instalado en su equipo..."
+sleep 3
+ 
+locate lvm2 >/dev/null 2>&1
+
+	if [ "$?" != "0" ]; then
+		echo
+		echo "Verificando si dispones del paquete lvm2"
+	else 
+		echo "Verificado ✔"
+			sleep 2
+		echo
+		echo "Accediendo..."
+			sleep 2
+			clear
+	fi
+}
+
+#Muestra el menu general
+function _menuPrincipal()
+{
+	clear
+	echo
+	echo "******************************************************************"
+        echo "------------------------MENU LVM----------------------------------"
+	echo "******************************************************************"
+	echo
+	    echo " 1.Comandos del administrador de volumenes Lógicos (LVM)";
+	    echo " 2.Crear volúmenes fisicos"
+	    echo " 3.Crear grupos de volumenes "
+	    echo " 4.Crear volumenes lógicos"
+	    echo " 5.Salir"
+	    echo
+	    echo -n "Indica una opcion: "
+	}
+#Submenu1
+
+function _submenu1()
+{
+clear
+echo "Comandos del administrador de volumenes Lógicos (LVM)"
+echo "*****************************************************"
+    echo
+    
+    echo "1. lvmdiskscan"
+    echo "2. lvmsadc"
+    echo "3. lvmsar"
+    echo "4. Salir"
+    echo
+    echo -n "Indica una opcion: "
+}
+
+#opcion 2
+
+function opc2()
+{
+echo "Crear volumenes físicos"
+echo "***********************"
+    echo "¿Quieres ejecutar el comando, para crear volúmenes físicos? (y/n)"
+	read opc2
+	case $opc2 in
+		[yY])
+			sleep 2
+			clear
+			echo
+			echo "Escriba el o los discos para crear el volumen fisico entre los siguientes (no olvide los \"/\" y el espacio entre ellos en caso de escribir los dos. (s:Salir)"
+			echo
+			sleep 2
+			echo "Discos del equipo: "
+			echo "-------------------"
+			sudo fdisk -l | grep sd | cut -d " " -f2 | tr ":" " "
+			echo "-------------------"
+			echo
+			echo "**OJO /dev/sda no es posible**"
+			echo
+			read -p "Su elección: " disco
+				if [ $disco == "s" ]; then
+				_menuPrincipal
+
+				else
+
+					pvcreate $disco 
+					echo
+					echo "Comando Realizado"
+					sleep 1
+					exit
+				fi
+		;;
+				
+		n)
+			clear
+			_menuPrincipal
+		;;
+
+	esac
+}
+
+#opción 3
+
+function opc3()
+{
+    echo "Crear grupos de volumenes"
+    echo "*************************"
+    echo "¿Quieres ejecutar el comando, para crear grupos de volumen? (y/n)"
+		read opc3
+		case $opc3 in
+			[yY])
+				sleep 2
+				clear
+				echo "¿Que nombre quieres para el grupo de volumenes?"
+				echo
+				read -p "Su elección: " nombregv
+				echo
+				echo "Escribe los discos que desea para crear el grupo de volumenes entre los siguientes (no olvide los \"/\" y el espacio entre ellos en caso de escribir los dos)"
+				echo
+				sleep 2
+				echo "Discos del equipo: "
+				echo "-------------------"
+				sudo fdisk -l | grep sd | cut -d " " -f2 | tr ":" " "
+				echo "-------------------"
+				echo
+				echo "**OJO /dev/sda no es posible**"
+				echo
+				read -p "Su elección: " gv
+				echo
+				vgcreate $nombregv $gv
+				echo "Comando realizado"
+				sleep 1
+				exit
+				;;
+			[nN])
+				clear
+				_menuPrincipal
+
+		esac
+}
+
+#Opción 4
+
+function opc4()
+{
+    
+    echo "Crear volumenes lógicos"
+    echo "***********************"
+    echo
+    echo "OJO esta opción es inviable sin hacer antes la opción 3, elija (z) para ir a ella, (y) para continuar o (n) para salir: "
+		echo
+		read -p "Elige una opcion (y/n/z) " opc4
+		case $opc4 in
+			[yY])
+				sleep 2
+				clear
+					
+				echo
+				echo "¿Que capacidad quieres para los volumenes lógicos? (gigas)"
+				echo
+				read -p "Su elección( nº + \"G\" sin espacios. MAX:10G):" capacidadvl
+				echo
+				echo "Escriba el nombre del grupo de volumen creado en la opcion 2"
+				echo
+				echo
+				read -p "Su elección: " nombregv
+				echo
+				echo "¿Qué nombre quieres para el volumen lógico? "
+				read -p "Su elección: " vl
+				echo
+				lvcreate -L $capacidadvl -n $vl $nombregv
+				echo "Comando realizado"
+				sleep 1
+				exit
+				;;
+			[nN])
+				clear
+				_menuPrincipal
+				;;
+				[zZ])
+				clear
+				opc3
+				;;
+
+		esac
+}
+
+_eresroot
+
+_lvm2ok
+
+
+
+opc=0
+
+until [ "$opc" == "5" ]
+do
+    case $opc in
+        1)
+            opc1=0
+            until [ "$opc1" == "4" ]
+            do
+                case $opc1 in
+                    1)
+			echo
+                        echo "Detalles del comando lvmdiskscan"
+			echo "********************************"
+			echo
+			lvmdiskscan -h | more
+                        ;;
+                    2)
+			echo
+                        echo "Detalles del comando lvmsadc"
+			echo "********************************"
+			echo
+			lvmsadc -h | more
+                        ;;
+                    3)
+			echo
+		        echo "Detalles del comando lvmsar"
+			echo "********************************"
+			echo
+			lvmsar -h | more
+                        ;;
+		    4)
+			clear
+			_menuPrincipal
+			;;
+                    *)
+                        _submenu1
+                        ;;
+                esac
+                read opc1
+            done
+
+            _menuPrincipal
+            ;;
+        2)
+	    echo
+            opc2
+            ;;
+        3)
+	    echo
+	    opc3
+            ;;
+        4)
+	    echo
+            opc4
+            ;;
+        5)
+	    exit
+	    ;;
+	*)
+	    clear
+	    _menuPrincipal
+	    ;;
+    esac
+read opc
+done
